@@ -1,0 +1,34 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+    Account A
+    Creates Firehose Delivery Stream
+
+Parameters:
+    EventDeliveryStreamName:
+        Type: String
+    EventDeliveryRoleARN:
+        Type: String
+    EventDeliveryBucketARN:
+        Type: String
+        
+Resources:
+
+    EventDeliveryStream: 
+        Type: AWS::KinesisFirehose::DeliveryStream
+        Properties: 
+            DeliveryStreamName: !Ref EventDeliveryStreamName
+            DeliveryStreamType: DirectPut
+            ExtendedS3DestinationConfiguration: 
+                BucketARN: !Ref EventDeliveryBucketARN
+                BufferingHints: 
+                    IntervalInSeconds: 60
+                    SizeInMBs: 50
+                CompressionFormat: UNCOMPRESSED
+                Prefix: firehose/
+                RoleARN: !Ref EventDeliveryRoleARN
+
+Outputs:
+
+    EventDeliveryStream:
+      Description: "Event Delivery Stream"
+      Value: !Ref EventDeliveryStream

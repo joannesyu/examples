@@ -1,0 +1,64 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+    Account B
+    Creates S3 Bucket, Delivery Stream Role and Delivery Stream Policy
+
+Parameters:
+    SourceAccountID:
+        Type: String
+
+Resources:
+
+    EventDeliveryBucket:
+        Type: AWS::S3::Bucket
+
+    EventDeliveryStreamRole:
+        Type: AWS::IAM::Role
+        Properties:
+          AssumeRolePolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: ''
+                Effect: Allow
+                Principal:
+                  Service: 
+                    - "firehose.amazonaws.com"
+                Action: 'sts:AssumeRole'
+                Condition:
+                  StringEquals:
+                    'sts:ExternalId': !Ref SourceAccountID
+
+    DeliveryStreamPolicy:
+        Type: AWS::IAM::Policy
+        Properties:
+            Roles:
+                - !Ref EventDeliveryStreamRole
+            PolicyName: firehose_delivery_policy
+            PolicyDocument:
+                Version: 2012-10-17
+                Statement:
+                - Effect: Allow
+                  Action:
+                    - 's3:AbortMultipartUpload'
+                    - 's3:GetBucketLocation'
+                    - 's3:GetObject'
+                    - 's3:ListBucket'
+                    - 's3:ListBucketMultipartUploads'
+                    - 's3:PutObject'
+                  Resource:
+                    - !GetAtt EventDeliveryBucket.Arn
+                    - !Join 
+                        - ''
+                        - - 'arn:aws:s3:::'
+                          - !Ref EventDeliveryBucket
+                          - '*'
+
+Outputs:
+
+    EventDeliveryBucketARN:
+      Description: "Event Delivery Bucket"
+      Value: !GetAtt EventDeliveryBucket.Arn
+    
+    EventDeliveryRoleARN:
+      Description: "Event Delivery Role"
+      Value: !GetAtt EventDeliveryStreamRole.Arn
